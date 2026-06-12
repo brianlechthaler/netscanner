@@ -40,23 +40,42 @@ function renderHosts(hosts) {
 
   if (!hosts.length) {
     hostsBody.innerHTML =
-      '<tr class="empty-row"><td colspan="4">No hosts discovered yet. Run a scan to get started.</td></tr>';
+      '<tr class="empty-row"><td colspan="6">No hosts discovered yet. Run a scan to get started.</td></tr>';
     return;
   }
 
   hostsBody.innerHTML = hosts
     .map((host) => {
-      const ports = host.open_ports.length ? host.open_ports.join(", ") : "—";
+      const ports = host.open_ports.length
+        ? host.open_ports
+            .map(
+              (p) =>
+                `<span class="port-tag" title="${escapeHtml(p.description)}">${p.port} (${p.service})</span>`
+            )
+            .join(" ")
+        : "—";
       const latency = host.latency_ms != null ? `${host.latency_ms} ms` : "—";
+      const hostname = host.hostname || "—";
+      const os = host.os || "—";
       const badgeClass = host.status === "up" ? "up" : "down";
       return `<tr>
         <td>${host.ip}</td>
+        <td>${escapeHtml(hostname)}</td>
         <td><span class="badge ${badgeClass}">${host.status}</span></td>
-        <td>${ports}</td>
+        <td class="ports-cell">${ports}</td>
+        <td class="os-cell">${escapeHtml(os)}</td>
         <td>${latency}</td>
       </tr>`;
     })
     .join("");
+}
+
+function escapeHtml(text) {
+  return String(text)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
 async function refreshDashboard() {

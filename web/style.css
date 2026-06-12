@@ -242,6 +242,28 @@ th {
   font-style: italic;
 }
 
+.ports-cell {
+  max-width: 280px;
+}
+
+.os-cell {
+  max-width: 220px;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.port-tag {
+  display: inline-block;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.15rem 0.45rem;
+  margin: 0.1rem 0.2rem 0.1rem 0;
+  font-size: 0.8rem;
+  cursor: help;
+  white-space: nowrap;
+}
+
 @media (max-width: 640px) {
   .header {
     flex-direction: column;
