@@ -1,17 +1,18 @@
-name: Test
+name: CI
 
 on:
   push:
-    branches: [main]
   pull_request:
-    branches: [main]
 
 concurrency:
-  group: test-${{ github.workflow }}-${{ github.ref }}
+  group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
-  test:
+  lint-and-test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -29,6 +30,22 @@ jobs:
           tags: netscanner-dev
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Check formatting
+        run: |
+          docker run --rm \
+            -v "${{ github.workspace }}:/app" \
+            -w /app \
+            netscanner-dev \
+            cargo fmt --all -- --check
+
+      - name: Clippy
+        run: |
+          docker run --rm \
+            -v "${{ github.workspace }}:/app" \
+            -w /app \
+            netscanner-dev \
+            cargo clippy --workspace --all-targets --all-features -- -D warnings
 
       - name: Run tests with 100% line coverage
         run: |
