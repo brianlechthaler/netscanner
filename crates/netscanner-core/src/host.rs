@@ -18,7 +18,12 @@ pub struct DiscoveredHost {
 }
 
 impl DiscoveredHost {
-    pub fn new(ip: IpAddr, status: HostStatus, open_ports: Vec<u16>, latency_ms: Option<u64>) -> Self {
+    pub fn new(
+        ip: IpAddr,
+        status: HostStatus,
+        open_ports: Vec<u16>,
+        latency_ms: Option<u64>,
+    ) -> Self {
         Self {
             ip,
             status,

@@ -1,5 +1,7 @@
 # NetScanner
 
+Repository: [github.com/brianlechthaler/netscanner](https://github.com/brianlechthaler/netscanner)
+
 A Rust network scanner with a web dashboard for discovering hosts on your local network and scanning external IPs.
 
 ## Features

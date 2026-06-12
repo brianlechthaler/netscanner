@@ -6,7 +6,9 @@ resolver = "2"
 version = "0.1.0"
 edition = "2021"
 license = "MIT"
-authors = ["Brian Lechthaler"]
+authors = ["Brian Lechthaler <https://github.com/brianlechthaler>"]
+repository = "https://github.com/brianlechthaler/netscanner"
+homepage = "https://github.com/brianlechthaler/netscanner"
 
 [workspace.dependencies]
 serde = { version = "1", features = ["derive"] }

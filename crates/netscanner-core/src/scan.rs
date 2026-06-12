@@ -84,11 +84,7 @@ impl<C: HostChecker + 'static> ScanEngine<C> {
         &self.config
     }
 
-    pub async fn scan_target(
-        &self,
-        target: &str,
-        kind: ScanKind,
-    ) -> ScanResult<ScanSummary> {
+    pub async fn scan_target(&self, target: &str, kind: ScanKind) -> ScanResult<ScanSummary> {
         let ips = ensure_has_ips(expand_target(target)?)?;
 
         let started = Instant::now();
@@ -189,7 +185,10 @@ pub fn active_hosts(hosts: &[DiscoveredHost]) -> Vec<&DiscoveredHost> {
 }
 
 /// Merge host lists keeping the latest scan result per IP.
-pub fn merge_hosts(existing: &[DiscoveredHost], incoming: &[DiscoveredHost]) -> Vec<DiscoveredHost> {
+pub fn merge_hosts(
+    existing: &[DiscoveredHost],
+    incoming: &[DiscoveredHost],
+) -> Vec<DiscoveredHost> {
     let mut seen: HashSet<IpAddr> = HashSet::new();
     let mut merged = Vec::new();
 

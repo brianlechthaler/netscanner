@@ -71,12 +71,9 @@ mod run_server_tests {
         let (shutdown_tx, shutdown_rx) = tokio::sync::oneshot::channel();
         let addr = SocketAddr::from(([0, 0, 0, 0], default_port()));
         let handle = tokio::spawn(async move {
-            let _ = run_server_with_shutdown(
-                addr,
-                async move {
-                    let _ = shutdown_rx.await;
-                },
-            )
+            let _ = run_server_with_shutdown(addr, async move {
+                let _ = shutdown_rx.await;
+            })
             .await;
         });
 
@@ -94,12 +91,9 @@ mod run_server_tests {
 
         let (shutdown_tx, shutdown_rx) = tokio::sync::oneshot::channel();
         let server = tokio::spawn(async move {
-            let _ = run_server_with_shutdown(
-                addr,
-                async {
-                    let _ = shutdown_rx.await;
-                },
-            )
+            let _ = run_server_with_shutdown(addr, async {
+                let _ = shutdown_rx.await;
+            })
             .await;
         });
 
@@ -127,12 +121,9 @@ mod run_server_tests {
 
         let (shutdown_tx, shutdown_rx) = tokio::sync::oneshot::channel();
         let server = tokio::spawn(async move {
-            let _ = run_server_with_shutdown(
-                addr,
-                async move {
-                    let _ = shutdown_rx.await;
-                },
-            )
+            let _ = run_server_with_shutdown(addr, async move {
+                let _ = shutdown_rx.await;
+            })
             .await;
         });
 
@@ -157,7 +148,9 @@ mod run_server_tests {
 
         let mut local = TcpStream::connect(addr).await.unwrap();
         local
-            .write_all(b"POST /api/scan/local HTTP/1.1\r\nHost: localhost\r\nContent-Length: 0\r\n\r\n")
+            .write_all(
+                b"POST /api/scan/local HTTP/1.1\r\nHost: localhost\r\nContent-Length: 0\r\n\r\n",
+            )
             .await
             .unwrap();
         let _ = local.read(&mut buf).await.unwrap();

@@ -1,7 +1,9 @@
 use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use netscanner_core::{active_hosts, DiscoveredHost, HostChecker, ScanEngine, ScanKind, ScanSummary};
+use netscanner_core::{
+    active_hosts, DiscoveredHost, HostChecker, ScanEngine, ScanKind, ScanSummary,
+};
 use serde::{Deserialize, Serialize};
 use tokio::sync::RwLock;
 use uuid::Uuid;

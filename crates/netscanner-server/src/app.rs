@@ -167,10 +167,9 @@ mod tests {
     use tower::ServiceExt;
 
     fn test_app() -> Router {
-        let checker = Arc::new(MockHostChecker::new().with_reachable(
-            IpAddr::from_str("203.0.113.10").unwrap(),
-            443,
-        ));
+        let checker = Arc::new(
+            MockHostChecker::new().with_reachable(IpAddr::from_str("203.0.113.10").unwrap(), 443),
+        );
         let engine = Arc::new(ScanEngine::new(checker, ScanConfig::default()));
         build_app(AppState::new(engine))
     }
@@ -323,7 +322,9 @@ mod tests {
             )
             .await
             .unwrap();
-        assert!(response.status() == StatusCode::OK || response.status() == StatusCode::BAD_REQUEST);
+        assert!(
+            response.status() == StatusCode::OK || response.status() == StatusCode::BAD_REQUEST
+        );
     }
 
     #[tokio::test]
@@ -371,11 +372,7 @@ mod tests {
                 .unwrap()
         };
 
-        let first = app
-            .clone()
-            .oneshot(request())
-            .await
-            .unwrap();
+        let first = app.clone().oneshot(request()).await.unwrap();
         assert_eq!(first.status(), StatusCode::OK);
 
         let second = app.oneshot(request()).await.unwrap();

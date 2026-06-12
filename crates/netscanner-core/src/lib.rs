@@ -10,7 +10,7 @@ pub use error::{ScanError, ScanResult};
 pub use host::{DiscoveredHost, HostStatus};
 pub use network::{expand_target, local_subnet_candidates};
 pub use scan::{
-    active_hosts, merge_hosts, pick_local_subnet, InterfaceProvider, ScanConfig, ScanEngine, ScanKind,
-    ScanProgress, ScanSummary, SystemInterfaceProvider,
+    active_hosts, merge_hosts, pick_local_subnet, InterfaceProvider, ScanConfig, ScanEngine,
+    ScanKind, ScanProgress, ScanSummary, SystemInterfaceProvider,
 };
-pub use scanner::{MockHostChecker, TcpHostChecker, HostChecker};
+pub use scanner::{HostChecker, MockHostChecker, TcpHostChecker};
