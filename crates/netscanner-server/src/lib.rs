@@ -86,11 +86,13 @@ mod run_server_tests {
 
     #[tokio::test]
     async fn run_from_env_invokes_server() {
-        let _guard = ENV_LOCK.lock().unwrap();
         let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
         let port = listener.local_addr().unwrap().port();
         drop(listener);
-        std::env::set_var("PORT", port.to_string());
+        {
+            let _guard = ENV_LOCK.lock().unwrap();
+            std::env::set_var("PORT", port.to_string());
+        }
 
         let (shutdown_tx, shutdown_rx) = tokio::sync::oneshot::channel();
         let addr = SocketAddr::from(([0, 0, 0, 0], default_port()));
@@ -104,7 +106,10 @@ mod run_server_tests {
         tokio::time::sleep(Duration::from_millis(150)).await;
         let _ = shutdown_tx.send(());
         let _ = tokio::time::timeout(Duration::from_secs(2), handle).await;
-        std::env::remove_var("PORT");
+        {
+            let _guard = ENV_LOCK.lock().unwrap();
+            std::env::remove_var("PORT");
+        }
     }
 
     #[tokio::test]
