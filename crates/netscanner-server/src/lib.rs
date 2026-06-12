@@ -48,17 +48,40 @@ pub async fn run_server_with_shutdown(
 #[cfg(test)]
 mod run_server_tests {
     use super::*;
+    use std::sync::Mutex;
     use std::time::Duration;
     use tokio::io::{AsyncReadExt, AsyncWriteExt};
     use tokio::net::TcpStream;
 
+    static ENV_LOCK: Mutex<()> = Mutex::new(());
+
+    fn restore_port(saved: Option<String>) {
+        match saved {
+            Some(value) => std::env::set_var("PORT", value),
+            None => std::env::remove_var("PORT"),
+        }
+    }
+
     #[test]
     fn default_port_resolution() {
+        let _guard = ENV_LOCK.lock().unwrap();
+        std::env::set_var("PORT", "1234");
+        let saved = std::env::var("PORT").ok();
         std::env::remove_var("PORT");
         assert_eq!(default_port(), 8080);
         std::env::set_var("PORT", "9090");
         assert_eq!(default_port(), 9090);
+        restore_port(saved);
+        assert_eq!(std::env::var("PORT").unwrap(), "1234");
+    }
+
+    #[test]
+    fn default_port_resolution_without_existing_port() {
+        let _guard = ENV_LOCK.lock().unwrap();
         std::env::remove_var("PORT");
+        let saved = std::env::var("PORT").ok();
+        assert_eq!(default_port(), 8080);
+        restore_port(saved);
     }
 
     #[tokio::test]
@@ -66,7 +89,10 @@ mod run_server_tests {
         let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
         let port = listener.local_addr().unwrap().port();
         drop(listener);
-        std::env::set_var("PORT", port.to_string());
+        {
+            let _guard = ENV_LOCK.lock().unwrap();
+            std::env::set_var("PORT", port.to_string());
+        }
 
         let (shutdown_tx, shutdown_rx) = tokio::sync::oneshot::channel();
         let addr = SocketAddr::from(([0, 0, 0, 0], default_port()));
@@ -80,7 +106,10 @@ mod run_server_tests {
         tokio::time::sleep(Duration::from_millis(150)).await;
         let _ = shutdown_tx.send(());
         let _ = tokio::time::timeout(Duration::from_secs(2), handle).await;
-        std::env::remove_var("PORT");
+        {
+            let _guard = ENV_LOCK.lock().unwrap();
+            std::env::remove_var("PORT");
+        }
     }
 
     #[tokio::test]

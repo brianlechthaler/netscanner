@@ -177,7 +177,11 @@ async fn probe_host<C: HostChecker>(
         lookup_hostname(ip, enrich_timeout),
         probe_os(ip, &open_ports, enrich_timeout),
     );
-    let port_details: Vec<OpenPort> = open_ports.iter().copied().map(OpenPort::from_port).collect();
+    let port_details: Vec<OpenPort> = open_ports
+        .iter()
+        .copied()
+        .map(OpenPort::from_port)
+        .collect();
 
     DiscoveredHost::with_details(ip, hostname, os, status, port_details, latency_ms)
 }
@@ -265,8 +269,8 @@ fn parse_ip_addr_line(line: &str) -> Option<(IpAddr, u8)> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::scanner::{MockHostChecker, TcpHostChecker};
     use crate::host::OpenPort;
+    use crate::scanner::{MockHostChecker, TcpHostChecker};
     use std::str::FromStr;
 
     #[test]
