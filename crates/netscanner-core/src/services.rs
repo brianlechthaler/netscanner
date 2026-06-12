@@ -65,4 +65,18 @@ mod tests {
         let info = port_info(9999);
         assert_eq!(info.service, "unknown");
     }
+
+    #[test]
+    fn all_known_ports_have_metadata() {
+        let ports = [
+            20, 21, 22, 23, 25, 53, 67, 68, 69, 80, 110, 123, 143, 161, 389, 443, 445, 465, 587,
+            636, 993, 995, 1433, 1521, 3306, 3389, 5432, 5900, 6379, 8080, 8443, 27017,
+        ];
+        for port in ports {
+            let info = port_info(port);
+            assert_eq!(info.port, port);
+            assert_ne!(info.service, "unknown");
+            assert!(!info.description.is_empty());
+        }
+    }
 }

@@ -8,7 +8,8 @@ use axum::{
     Json, Router,
 };
 use netscanner_core::{
-    pick_local_subnet, HostChecker, InterfaceProvider, ScanError, ScanKind, SystemInterfaceProvider,
+    pick_local_subnet, HostChecker, InterfaceProvider, ScanEngine, ScanError, ScanKind,
+    SystemInterfaceProvider,
 };
 use serde::{Deserialize, Serialize};
 use tower_http::cors::CorsLayer;
@@ -96,6 +97,18 @@ async fn scan_target<C: HostChecker + 'static>(
     .await
 }
 
+async fn run_scan<C: HostChecker + 'static>(
+    state: Arc<AppState<C>>,
+    engine: Arc<ScanEngine<C>>,
+    target: String,
+    kind: ScanKind,
+) {
+    match engine.scan_target(&target, kind).await {
+        Ok(summary) => state.complete_scan(summary).await,
+        Err(err) => state.fail_scan(err.to_string()).await,
+    }
+}
+
 async fn spawn_scan<C: HostChecker + 'static>(
     state: Arc<AppState<C>>,
     kind_dto: ScanKindDto,
@@ -109,12 +122,7 @@ async fn spawn_scan<C: HostChecker + 'static>(
 
     let message_target = target.clone();
     let engine = state.engine();
-    tokio::spawn(async move {
-        match engine.scan_target(&target, kind).await {
-            Ok(summary) => state.complete_scan(summary).await,
-            Err(err) => state.fail_scan(err.to_string()).await,
-        }
-    });
+    tokio::spawn(run_scan(state, engine, target, kind));
 
     Ok(Json(ScanStartedResponse {
         scan_id: scan_id.to_string(),
@@ -159,18 +167,23 @@ impl IntoResponse for ApiError {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::state::ScanStatus;
     use axum::body::Body;
     use axum::http::{Request, StatusCode};
-    use netscanner_core::{MockHostChecker, ScanConfig, ScanEngine};
+    use netscanner_core::{MockHostChecker, ScanConfig, ScanEngine, ScanKind};
     use std::net::IpAddr;
     use std::str::FromStr;
+    use std::time::Duration;
     use tower::ServiceExt;
 
     fn test_app() -> Router {
         let checker = Arc::new(
             MockHostChecker::new().with_reachable(IpAddr::from_str("203.0.113.10").unwrap(), 443),
         );
-        let engine = Arc::new(ScanEngine::new(checker, ScanConfig::default()));
+        let engine = Arc::new(ScanEngine::new(
+            checker,
+            ScanConfig::default().with_timeout(Duration::from_millis(50)),
+        ));
         build_app(AppState::new(engine))
     }
 
@@ -205,6 +218,25 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn run_scan_completes_successfully() {
+        let checker = Arc::new(
+            MockHostChecker::new().with_reachable(IpAddr::from_str("203.0.113.10").unwrap(), 443),
+        );
+        let engine = Arc::new(ScanEngine::new(
+            checker,
+            ScanConfig::default().with_timeout(Duration::from_millis(50)),
+        ));
+        let state = AppState::new(engine.clone());
+        let target = "203.0.113.10".to_string();
+        state
+            .begin_scan(ScanKindDto::External, target.clone())
+            .await
+            .unwrap();
+        run_scan(state.clone(), engine, target, ScanKind::External).await;
+        assert_eq!(state.status_response().await.status, ScanStatus::Completed);
+    }
+
+    #[tokio::test]
     async fn scan_target_completes_successfully() {
         let app = test_app();
         let body = serde_json::json!({ "target": "203.0.113.10" });
@@ -222,7 +254,7 @@ mod tests {
             .unwrap();
         assert_eq!(response.status(), StatusCode::OK);
 
-        tokio::time::sleep(std::time::Duration::from_millis(300)).await;
+        tokio::time::sleep(Duration::from_millis(500)).await;
 
         let hosts_response = app
             .oneshot(
