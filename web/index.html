@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NetScanner Dashboard</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <div class="layout">
+      <header class="header">
+        <div>
+          <h1>NetScanner</h1>
+          <p class="subtitle">Local network and external host discovery</p>
+        </div>
+        <div class="status-pill" id="status-pill">Idle</div>
+      </header>
+
+      <section class="controls card">
+        <h2>Scan Controls</h2>
+        <div class="button-row">
+          <button id="scan-local-btn" class="btn primary">Scan Local Network</button>
+          <button id="refresh-btn" class="btn secondary">Refresh Hosts</button>
+        </div>
+        <form id="external-form" class="external-form">
+          <label for="target-input">External IP or CIDR</label>
+          <div class="input-row">
+            <input
+              id="target-input"
+              type="text"
+              placeholder="8.8.8.8 or 203.0.113.0/28"
+              required
+            />
+            <button type="submit" class="btn primary">Scan Target</button>
+          </div>
+        </form>
+        <p id="message" class="message" aria-live="polite"></p>
+      </section>
+
+      <section class="stats card">
+        <div class="stat">
+          <span class="stat-label">Hosts Up</span>
+          <span class="stat-value" id="hosts-up">0</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Total Scanned</span>
+          <span class="stat-value" id="hosts-total">0</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Last Target</span>
+          <span class="stat-value small" id="last-target">—</span>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="table-header">
+          <h2>Discovered Hosts</h2>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>IP Address</th>
+                <th>Status</th>
+                <th>Open Ports</th>
+                <th>Latency</th>
+              </tr>
+            </thead>
+            <tbody id="hosts-body">
+              <tr class="empty-row">
+                <td colspan="4">No hosts discovered yet. Run a scan to get started.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+    <script src="/app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,8 @@
+/target
+**/*.profraw
+**/*.profdata
+/coverage
+/coverage.txt
+lcov.info
+.DS_Store
+.env

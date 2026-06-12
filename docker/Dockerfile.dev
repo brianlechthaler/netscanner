@@ -1,0 +1,21 @@
+FROM rust:1.88-bookworm AS dev
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    iproute2 \
+    llvm \
+    pkg-config \
+    libssl-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN rustup component add llvm-tools-preview
+
+WORKDIR /app
+
+COPY Cargo.toml Cargo.lock* ./
+COPY crates ./crates
+
+RUN cargo fetch
+
+COPY . .
+
+CMD ["bash"]
