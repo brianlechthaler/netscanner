@@ -7,10 +7,11 @@ authors.workspace = true
 
 [dependencies]
 async-trait = "0.1"
+dns-lookup = "2"
 ipnetwork = "0.20"
 serde.workspace = true
 thiserror.workspace = true
-tokio = { workspace = true, features = ["net", "time", "sync", "rt", "macros"] }
+tokio = { workspace = true, features = ["net", "time", "sync", "rt", "macros", "io-util"] }
 tracing.workspace = true
 
 [dev-dependencies]

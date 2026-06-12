@@ -171,7 +171,7 @@ fn now_epoch_secs() -> u64 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use netscanner_core::{HostStatus, MockHostChecker, ScanConfig, ScanEngine};
+    use netscanner_core::{HostStatus, MockHostChecker, OpenPort, ScanConfig, ScanEngine};
     use std::net::IpAddr;
     use std::str::FromStr;
 
@@ -217,7 +217,7 @@ mod tests {
         let host = DiscoveredHost::new(
             IpAddr::from_str("1.1.1.1").unwrap(),
             HostStatus::Up,
-            vec![443],
+            vec![OpenPort::from_port(443)],
             Some(10),
         );
         let summary = ScanSummary {
@@ -279,7 +279,12 @@ mod tests {
         let summary = ScanSummary {
             kind: ScanKind::External,
             target: "10.0.0.2".into(),
-            hosts: vec![DiscoveredHost::new(ip, HostStatus::Up, vec![80], Some(3))],
+            hosts: vec![DiscoveredHost::new(
+                ip,
+                HostStatus::Up,
+                vec![OpenPort::from_port(80)],
+                Some(3),
+            )],
             duration_ms: 1,
         };
         state.complete_scan(summary).await;
@@ -292,7 +297,7 @@ mod tests {
         let host = DiscoveredHost::new(
             IpAddr::from_str("10.0.0.1").unwrap(),
             HostStatus::Up,
-            vec![22],
+            vec![OpenPort::from_port(22)],
             None,
         );
         state.set_hosts(vec![host.clone()]).await;

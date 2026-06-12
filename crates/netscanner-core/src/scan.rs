@@ -7,8 +7,9 @@ use std::time::{Duration, Instant};
 use tokio::sync::Semaphore;
 use tokio::time::timeout;
 
+use crate::enrich::{lookup_hostname, probe_os};
 use crate::error::{ScanError, ScanResult};
-use crate::host::{DiscoveredHost, HostStatus};
+use crate::host::{DiscoveredHost, HostStatus, OpenPort};
 use crate::network::expand_target;
 use crate::scanner::HostChecker;
 
@@ -167,7 +168,18 @@ async fn probe_host<C: HostChecker>(
         HostStatus::Up
     };
 
-    DiscoveredHost::new(ip, status, open_ports, latency_ms)
+    if status == HostStatus::Down {
+        return DiscoveredHost::new(ip, status, vec![], latency_ms);
+    }
+
+    let enrich_timeout = timeout_dur + timeout_dur;
+    let (hostname, os) = tokio::join!(
+        lookup_hostname(ip, enrich_timeout),
+        probe_os(ip, &open_ports, enrich_timeout),
+    );
+    let port_details: Vec<OpenPort> = open_ports.iter().copied().map(OpenPort::from_port).collect();
+
+    DiscoveredHost::with_details(ip, hostname, os, status, port_details, latency_ms)
 }
 
 /// Select the best local subnet from interface list.
@@ -254,6 +266,7 @@ fn parse_ip_addr_line(line: &str) -> Option<(IpAddr, u8)> {
 mod tests {
     use super::*;
     use crate::scanner::{MockHostChecker, TcpHostChecker};
+    use crate::host::OpenPort;
     use std::str::FromStr;
 
     #[test]
@@ -330,7 +343,7 @@ mod tests {
         let up = DiscoveredHost::new(
             IpAddr::from_str("1.1.1.1").unwrap(),
             HostStatus::Up,
-            vec![443],
+            vec![OpenPort::from_port(443)],
             None,
         );
         let down = DiscoveredHost::new(
@@ -349,7 +362,7 @@ mod tests {
     fn merge_hosts_prefers_incoming() {
         let ip = IpAddr::from_str("10.0.0.1").unwrap();
         let old = DiscoveredHost::new(ip, HostStatus::Down, vec![], None);
-        let new = DiscoveredHost::new(ip, HostStatus::Up, vec![80], Some(1));
+        let new = DiscoveredHost::new(ip, HostStatus::Up, vec![OpenPort::from_port(80)], Some(1));
         let merged = merge_hosts(&[old], &[new.clone()]);
         assert_eq!(merged.len(), 1);
         assert_eq!(merged[0], new);
@@ -460,7 +473,12 @@ mod tests {
     fn merge_hosts_is_used_in_exports() {
         let ip = IpAddr::from_str("192.168.0.1").unwrap();
         let left = vec![DiscoveredHost::new(ip, HostStatus::Down, vec![], None)];
-        let right = vec![DiscoveredHost::new(ip, HostStatus::Up, vec![443], Some(1))];
+        let right = vec![DiscoveredHost::new(
+            ip,
+            HostStatus::Up,
+            vec![OpenPort::from_port(443)],
+            Some(1),
+        )];
         let merged = merge_hosts(&left, &right);
         assert_eq!(merged.len(), 1);
         assert!(merged[0].is_up());
